@@ -13,6 +13,7 @@
 - ✅ One clean `"plugins"` entry in `app.json`/`app.config.js`
 - ✅ iOS values are only set if provided (won’t overwrite existing Xcode settings)
 - ✅ Android keystore setup is automated
+- ✅ **Customizable `app_path`** for Android projects in non-standard directories
 
 ---
 
@@ -46,6 +47,7 @@ In your **`app.json`** or **`app.config.js`**, add to the `plugins` array:
         "react-native-expo-signed",
         {
           "android": {
+            "app_path": "./android/app", // optional, defaults to ./android/app
             "store_file": {
               "key": "MY_UPLOAD_STORE_FILE",
               "value": "my-upload-key.keystore"
@@ -88,24 +90,25 @@ In your **`app.json`** or **`app.config.js`**, add to the `plugins` array:
 | `DEVELOPMENT_TEAM`               | Apple Developer Team ID                 | `"Team_ID"`             |
 | `PROVISIONING_PROFILE_SPECIFIER` | Provisioning profile name               | `"Profile Name"`        |
 
-**Behavior:**  
+**Behavior:**
 If any of the above keys are **missing** from `ios` config, the plugin will **not change** that setting in your Xcode project.
 
 ---
 
 ## 🤖 Android Options
 
-| Key                    | Description                                        | Example                      |
-| ---------------------- | -------------------------------------------------- | ---------------------------- |
-| `store_file.key`       | Keystore path property name in `gradle.properties` | `"MY_UPLOAD_STORE_FILE"`     |
-| `store_file.value`     | Keystore filename                                  | `"my-upload-key.keystore"`   |
-| `key_alias.key`        | Key alias property name                            | `"MY_UPLOAD_KEY_ALIAS"`      |
-| `key_alias.value`      | Alias name                                         | `"my-key-alias"`             |
-| `store_password.key`   | Store password property name                       | `"MY_UPLOAD_STORE_PASSWORD"` |
-| `store_password.value` | Store password value                               | `"password123"`              |
-| `key_password.key`     | Key password property name                         | `"MY_UPLOAD_KEY_PASSWORD"`   |
-| `key_password.value`   | Key password value                                 | `"password123"`              |
-| `keystorePath`         | Folder path containing keystore file               | `"./src/assets"`             |
+| Key                    | Description                                        | Example                       |
+| ---------------------- | -------------------------------------------------- | ----------------------------- |
+| `app_path`             | Path to the Android app directory (optional)       | `"./android/app"` _(default)_ |
+| `store_file.key`       | Keystore path property name in `gradle.properties` | `"MY_UPLOAD_STORE_FILE"`      |
+| `store_file.value`     | Keystore filename                                  | `"my-upload-key.keystore"`    |
+| `key_alias.key`        | Key alias property name                            | `"MY_UPLOAD_KEY_ALIAS"`       |
+| `key_alias.value`      | Alias name                                         | `"my-key-alias"`              |
+| `store_password.key`   | Store password property name                       | `"MY_UPLOAD_STORE_PASSWORD"`  |
+| `store_password.value` | Store password value                               | `"password123"`               |
+| `key_password.key`     | Key password property name                         | `"MY_UPLOAD_KEY_PASSWORD"`    |
+| `key_password.value`   | Key password value                                 | `"password123"`               |
+| `keystorePath`         | Folder path containing keystore file               | `"./src/assets"`              |
 
 ---
 
@@ -114,10 +117,11 @@ If any of the above keys are **missing** from `ios` config, the plugin will **no
 1. **Android:**
 
    - Adds required signing properties to `gradle.properties`
-   - Copies keystore file from `keystorePath` to `android/app`
+   - Copies keystore file from `keystorePath` to `app_path`
    - Updates `build.gradle` to use `release` signing config
 
 2. **iOS:**
+
    - Opens `.xcodeproj` during prebuild
    - Updates `buildSettings` keys **only if a value is provided**
    - Leaves untouched settings alone

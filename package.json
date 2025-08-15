@@ -1,6 +1,6 @@
 {
   "name": "react-native-expo-signed",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "An Expo config plugin for setting up code signing for Android and iOS builds during Expo prebuild.",
   "main": "index.js",
   "repository": {

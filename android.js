@@ -4,11 +4,9 @@ const { withGradleProperties } = require("@expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
-const app_path = "./android/app";
-
 const modifyGradleProperties = (config, props) => {
   return withGradleProperties(config, (config) => {
-    Object.entries(props).forEach(([prop, { key, value }]) => {
+    Object.entries(props).forEach(([_, { key, value }]) => {
       if (key && value) {
         const exists = config.modResults.find(
           (item) => item.type === "property" && item.key === key
@@ -23,11 +21,13 @@ const modifyGradleProperties = (config, props) => {
   });
 };
 
-const modifyBuildGradle = (config, props) => {
-  const filePath = path.resolve(app_path, "build.gradle");
+const modifyBuildGradle = (config, props, appPath) => {
+  const filePath = path.resolve(appPath, "build.gradle");
 
   if (fs.existsSync(filePath)) {
-    const content = fs.readFileSync(filePath, "utf8");
+    let content = fs.readFileSync(filePath, "utf8");
+    content = content.replace(/\r\n/g, "\n"); // normalize line endings
+
     const release =
       /signingConfigs\s*\{(?:[^{}]*\{[^}]*\}|[^}])*release\s*\{[^}]*\}[^}]*\}/;
 
@@ -40,14 +40,14 @@ const modifyBuildGradle = (config, props) => {
       updatedContent = updatedContent.replace(
         /(signingConfigs\s*{[^}]*debug\s*{[^}]*})/,
         `$1
-		release {
-			if (project.hasProperty('${props.store_file.key}')) {
-				storeFile file(${props.store_file.key})
-				storePassword ${props.store_password.key}
-				keyAlias ${props.key_alias.key}
-				keyPassword ${props.key_password.key}
-			}
-		}`
+        release {
+            if (project.hasProperty('${props.store_file.key}')) {
+                storeFile file(${props.store_file.key})
+                storePassword ${props.store_password.key}
+                keyAlias ${props.key_alias.key}
+                keyPassword ${props.key_password.key}
+            }
+        }`
       );
     }
 
@@ -59,11 +59,15 @@ const modifyBuildGradle = (config, props) => {
   return config;
 };
 
-const copyKeystoreFile = (config, props) => {
+const copyKeystoreFile = (config, props, appPath) => {
   const source = path.resolve(props.keystorePath, props.store_file.value);
-  const destination = path.resolve(app_path, props.store_file.value);
+  const destination = path.resolve(appPath, props.store_file.value);
 
-  if (fs.existsSync(source) && fs.existsSync(path.dirname(destination))) {
+  if (!fs.existsSync(source)) {
+    throw new Error(`❌ Keystore file not found at: ${source}`);
+  }
+
+  if (fs.existsSync(path.dirname(destination))) {
     fs.copyFileSync(source, destination);
   }
 
@@ -85,9 +89,20 @@ const withSigned = (config, props) => {
     }
   });
 
+  const appPath = props.app_path || "./android/app"; // default if not provided
+
+  const keystoreFullPath = path.resolve(
+    props.keystorePath,
+    props.store_file.value
+  );
+  if (!fs.existsSync(keystoreFullPath)) {
+    throw new Error(`❌ Keystore missing: ${keystoreFullPath}`);
+  }
+
   return copyKeystoreFile(
-    modifyBuildGradle(modifyGradleProperties(config, props), props),
-    props
+    modifyBuildGradle(modifyGradleProperties(config, props), props, appPath),
+    props,
+    appPath
   );
 };
 
