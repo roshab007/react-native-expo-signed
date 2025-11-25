@@ -1,17 +1,21 @@
 {
   "name": "react-native-expo-signed",
-  "version": "1.0.4",
+  "version": "2.1.0",
   "description": "An Expo config plugin for setting up code signing for Android and iOS builds during Expo prebuild.",
-  "main": "index.js",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/roshab007/react-native-expo-signed.git"
   },
   "files": [
-    "android.js",
-    "ios.js",
-    "index.js"
+    "build"
   ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "prepublishOnly": "yarn build"
+  },
   "author": "roshab007",
   "license": "MIT",
   "homepage": "https://github.com/roshab007/react-native-expo-signed",
@@ -19,15 +23,23 @@
     "expo",
     "expo-plugin",
     "config-plugin",
-    "react-native",
     "android-signing",
     "ios-signing",
     "code-signing",
     "eas-build",
     "keystore",
-    "xcode"
+    "xcode",
+    "react",
+    "react-native",
+    "ios",
+    "android"
   ],
-  "peerDependencies": {
-    "@expo/config-plugins": "*"
+  "devDependencies": {
+    "@expo/config-plugins": "^54.0.2",
+    "@types/node": "^24.10.1",
+    "builtin-modules": "^5.0.0",
+    "typescript": "5.8.2",
+    "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.5.4"
   }
 }

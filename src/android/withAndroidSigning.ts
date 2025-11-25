@@ -1,12 +1,11 @@
-/* eslint-env node */
+import type { AndroidConfig, AndroidSigningOptions } from "@/types/android";
+import { withGradleProperties } from "@expo/config-plugins";
+import fs from "fs";
+import path from "path";
 
-const { withGradleProperties } = require("@expo/config-plugins");
-const fs = require("fs");
-const path = require("path");
-
-const modifyGradleProperties = (config, props) => {
+const modifyGradleProperties: AndroidConfig = (config, android) => {
   return withGradleProperties(config, (config) => {
-    Object.entries(props).forEach(([_, { key, value }]) => {
+    Object.entries(android).forEach(([_, { key, value }]) => {
       if (key && value) {
         const exists = config.modResults.find(
           (item) => item.type === "property" && item.key === key
@@ -21,8 +20,8 @@ const modifyGradleProperties = (config, props) => {
   });
 };
 
-const modifyBuildGradle = (config, props, appPath) => {
-  const filePath = path.resolve(appPath, "build.gradle");
+const modifyBuildGradle: AndroidConfig = (config, android) => {
+  const filePath = path.resolve(android.app_path!, "build.gradle");
 
   if (fs.existsSync(filePath)) {
     let content = fs.readFileSync(filePath, "utf8");
@@ -41,11 +40,11 @@ const modifyBuildGradle = (config, props, appPath) => {
         /(signingConfigs\s*{[^}]*debug\s*{[^}]*})/,
         `$1
         release {
-            if (project.hasProperty('${props.store_file.key}')) {
-                storeFile file(${props.store_file.key})
-                storePassword ${props.store_password.key}
-                keyAlias ${props.key_alias.key}
-                keyPassword ${props.key_password.key}
+            if (project.hasProperty('${android.store_file.key}')) {
+                storeFile file(${android.store_file.key})
+                storePassword ${android.store_password.key}
+                keyAlias ${android.key_alias.key}
+                keyPassword ${android.key_password.key}
             }
         }`
       );
@@ -59,9 +58,9 @@ const modifyBuildGradle = (config, props, appPath) => {
   return config;
 };
 
-const copyKeystoreFile = (config, props, appPath) => {
-  const source = path.resolve(props.keystorePath, props.store_file.value);
-  const destination = path.resolve(appPath, props.store_file.value);
+const copyKeystoreFile: AndroidConfig = (config, props) => {
+  const source = path.resolve(props.keystorePath!, props.store_file.value);
+  const destination = path.resolve(props.app_path!, props.store_file.value);
 
   if (!fs.existsSync(source)) {
     throw new Error(`❌ Keystore file not found at: ${source}`);
@@ -74,36 +73,33 @@ const copyKeystoreFile = (config, props, appPath) => {
   return config;
 };
 
-const withSigned = (config, props) => {
-  const requiredProps = [
+const withAndroidSigning: AndroidConfig = (config, android) => {
+  const required: (keyof AndroidSigningOptions)[] = [
     "store_file",
     "key_alias",
     "store_password",
     "key_password",
     "keystorePath",
+    "app_path",
   ];
 
-  requiredProps.forEach((prop) => {
-    if (!props[prop]) {
-      throw new Error(`Missing required property: ${prop}`);
-    }
+  required.forEach((k) => {
+    if (!android[k]) throw new Error(`Missing required: ${k}`);
   });
 
-  const appPath = props.app_path || "./android/app"; // default if not provided
-
   const keystoreFullPath = path.resolve(
-    props.keystorePath,
-    props.store_file.value
+    android.keystorePath!,
+    android.store_file.value
   );
   if (!fs.existsSync(keystoreFullPath)) {
     throw new Error(`❌ Keystore missing: ${keystoreFullPath}`);
   }
 
-  return copyKeystoreFile(
-    modifyBuildGradle(modifyGradleProperties(config, props), props, appPath),
-    props,
-    appPath
+  const result = copyKeystoreFile(
+    modifyBuildGradle(modifyGradleProperties(config, android), android),
+    android
   );
+  return result;
 };
 
-module.exports = { withAndroidSigning: withSigned };
+export default withAndroidSigning;

@@ -108,7 +108,7 @@ If any of the above keys are **missing** from `ios` config, the plugin will **no
 | `store_password.value` | Store password value                               | `"password123"`               |
 | `key_password.key`     | Key password property name                         | `"MY_UPLOAD_KEY_PASSWORD"`    |
 | `key_password.value`   | Key password value                                 | `"password123"`               |
-| `keystorePath`         | Folder path containing keystore file               | `"./src/assets"`              |
+| `keystorePath`         | Folder path containing keystore file               | `"./"` _(default)_            |
 
 ---
 
